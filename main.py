@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 
-
 load_dotenv()
 
 
@@ -103,6 +102,14 @@ def create_teams_meeting(
     # ==========================================
     # Teams Meeting Payload
     # ==========================================
+    #
+    # isPasscodeRequired = true
+    # tells Microsoft Teams to generate
+    # a passcode automatically.
+    #
+    # Microsoft does not support providing
+    # your own custom passcode here.
+    # ==========================================
 
     teams_meeting_payload = {
 
@@ -112,12 +119,18 @@ def create_teams_meeting(
 
         "subject": (
             f"{subject} - {candidateName}"
-        )
+        ),
+
+        "joinMeetingIdSettings": {
+
+            "isPasscodeRequired": True
+
+        }
     }
 
 
     # ==========================================
-    # Create Teams Meeting
+    # Create Meeting
     # ==========================================
 
     response = requests.post(
@@ -176,15 +189,50 @@ def create_teams_meeting(
 
 
         # --------------------------------------
-        # Get Teams Meeting Information
+        # Get Teams Meeting URL
         # --------------------------------------
 
         join_web_url = response_data.get(
             "joinWebUrl"
         )
 
-        meeting_code = response_data.get(
-            "meetingCode"
+
+        # --------------------------------------
+        # Get Meeting ID and Passcode
+        # --------------------------------------
+        #
+        # These are inside:
+        #
+        # joinMeetingIdSettings
+        #
+        # Example:
+        #
+        # "joinMeetingIdSettings": {
+        #     "isPasscodeRequired": true,
+        #     "joinMeetingId": "123456789",
+        #     "passcode": "ABC123"
+        # }
+        # --------------------------------------
+
+        join_meeting_settings = (
+            response_data.get(
+                "joinMeetingIdSettings",
+                {}
+            )
+        )
+
+
+        meeting_id = (
+            join_meeting_settings.get(
+                "joinMeetingId"
+            )
+        )
+
+
+        passcode = (
+            join_meeting_settings.get(
+                "passcode"
+            )
         )
 
 
@@ -206,9 +254,9 @@ def create_teams_meeting(
 
             "joinWebUrl": join_web_url,
 
-            "meetingCode": meeting_code,
+            "meetingCode": meeting_id,
 
-            "passcode": meeting_code,
+            "passcode": passcode,
 
             "startDateTime": response_data.get(
                 "startDateTime"
