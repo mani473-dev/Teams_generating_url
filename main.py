@@ -1,8 +1,10 @@
 from msal import ConfidentialClientApplication
 import requests
 import os
+
 from dotenv import load_dotenv
 from datetime import datetime
+
 
 load_dotenv()
 
@@ -18,12 +20,14 @@ OBJECT_ID = os.getenv("OBJECT_ID")
 
 
 # ==========================================
-# Generate Access Token
+# Generate Microsoft Graph Access Token
 # ==========================================
 
 def get_access_token():
 
-    authority = f"https://login.microsoftonline.com/{TENANT_ID}"
+    authority = (
+        f"https://login.microsoftonline.com/{TENANT_ID}"
+    )
 
     app = ConfidentialClientApplication(
         CLIENT_ID,
@@ -32,10 +36,13 @@ def get_access_token():
     )
 
     token_result = app.acquire_token_for_client(
-        scopes=["https://graph.microsoft.com/.default"]
+        scopes=[
+            "https://graph.microsoft.com/.default"
+        ]
     )
 
     if "access_token" not in token_result:
+
         return None
 
     return token_result["access_token"]
@@ -56,7 +63,7 @@ def create_teams_meeting(
 ):
 
     # ==========================================
-    # Access Token
+    # Generate Access Token
     # ==========================================
 
     access_token = get_access_token()
@@ -70,21 +77,25 @@ def create_teams_meeting(
 
 
     # ==========================================
-    # Headers
+    # Request Headers
     # ==========================================
 
     headers = {
-        "Authorization": f"Bearer {access_token}",
+
+        "Authorization": (
+            f"Bearer {access_token}"
+        ),
+
         "Content-Type": "application/json"
     }
 
 
     # ==========================================
-    # Teams Meeting URL
+    # Microsoft Graph Online Meeting API
     # ==========================================
 
     teams_meeting_url = (
-        f"https://graph.microsoft.com/v1.0/"
+        "https://graph.microsoft.com/v1.0/"
         f"users/{OBJECT_ID}/onlineMeetings"
     )
 
@@ -93,29 +104,34 @@ def create_teams_meeting(
     # Teams Meeting Payload
     # ==========================================
 
-    teams_meeting_url_payload = {
+    teams_meeting_payload = {
 
         "startDateTime": startDateTime,
 
         "endDateTime": endDateTime,
 
-        "subject": f"{subject} - {candidateName}"
+        "subject": (
+            f"{subject} - {candidateName}"
+        )
     }
 
 
     # ==========================================
-    # Create Meeting
+    # Create Teams Meeting
     # ==========================================
 
     response = requests.post(
+
         teams_meeting_url,
+
         headers=headers,
-        json=teams_meeting_url_payload
+
+        json=teams_meeting_payload
     )
 
 
     # ==========================================
-    # Parse Response
+    # Read Microsoft Graph Response
     # ==========================================
 
     try:
@@ -125,27 +141,56 @@ def create_teams_meeting(
     except Exception:
 
         return {
+
             "status": "Failed",
+
             "message": response.text
         }
 
 
     # ==========================================
-    # Success
+    # Meeting Created Successfully
     # ==========================================
 
     if response.status_code == 201:
 
+        # --------------------------------------
+        # Calculate Duration
+        # --------------------------------------
+
         start = datetime.fromisoformat(
-            startDateTime.replace("Z", "+00:00")
+            startDateTime.replace(
+                "Z",
+                "+00:00"
+            )
         )
 
         end = datetime.fromisoformat(
-            endDateTime.replace("Z", "+00:00")
+            endDateTime.replace(
+                "Z",
+                "+00:00"
+            )
         )
 
         duration = end - start
 
+
+        # --------------------------------------
+        # Get Teams Meeting Information
+        # --------------------------------------
+
+        join_web_url = response_data.get(
+            "joinWebUrl"
+        )
+
+        meeting_code = response_data.get(
+            "meetingCode"
+        )
+
+
+        # --------------------------------------
+        # Return Response
+        # --------------------------------------
 
         return {
 
@@ -159,13 +204,11 @@ def create_teams_meeting(
 
             "interviewersEmail": interviewersEmail,
 
-            "joinWebUrl": response_data.get(
-                "joinWebUrl"
-            ),
+            "joinWebUrl": join_web_url,
 
-            "meetingCode": response_data.get(
-                "meetingCode"
-            ),
+            "meetingCode": meeting_code,
+
+            "passcode": meeting_code,
 
             "startDateTime": response_data.get(
                 "startDateTime"
@@ -184,7 +227,7 @@ def create_teams_meeting(
 
 
     # ==========================================
-    # Failure
+    # Microsoft Graph Error
     # ==========================================
 
     return {
