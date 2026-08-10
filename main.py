@@ -7,11 +7,19 @@ from datetime import datetime
 load_dotenv()
 
 
+# ==========================================
+# Azure App Registration
+# ==========================================
+
 TENANT_ID = os.getenv("TENANT_ID")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 OBJECT_ID = os.getenv("OBJECT_ID")
 
+
+# ==========================================
+# Generate Access Token
+# ==========================================
 
 def get_access_token():
 
@@ -33,12 +41,22 @@ def get_access_token():
     return token_result["access_token"]
 
 
+# ==========================================
+# Create Teams Meeting
+# ==========================================
+
 def create_teams_meeting(
     candidateName,
+    email,
     startDateTime,
     endDateTime,
-    subject
+    subject,
+    interviewers
 ):
+
+    # ==========================================
+    # Generate Access Token
+    # ==========================================
 
     access_token = get_access_token()
 
@@ -48,26 +66,79 @@ def create_teams_meeting(
             "message": "Unable to generate access token."
         }
 
+    # ==========================================
+    # Headers
+    # ==========================================
+
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
+    # ==========================================
+    # Microsoft Graph Endpoint
+    # ==========================================
+
     teams_meeting_url = (
-        f"https://graph.microsoft.com/v1.0/users/{OBJECT_ID}/onlineMeetings"
+        f"https://graph.microsoft.com/v1.0/"
+        f"users/{OBJECT_ID}/onlineMeetings"
     )
+
+    # ==========================================
+    # Create Attendees
+    # ==========================================
+
+    attendees = []
+
+    # Candidate
+    if email:
+        attendees.append({
+            "identity": {
+                "user": {
+                    "id": email
+                }
+            },
+            "role": "attendee"
+        })
+
+    # Interviewers
+    for interviewer in interviewers:
+
+        attendees.append({
+            "identity": {
+                "user": {
+                    "id": interviewer
+                }
+            },
+            "role": "presenter"
+        })
+
+    # ==========================================
+    # Teams Meeting Payload
+    # ==========================================
 
     teams_meeting_url_payload = {
         "startDateTime": startDateTime,
         "endDateTime": endDateTime,
-        "subject": f"{subject} - {candidateName}"
+        "subject": f"{subject} - {candidateName}",
+        "participants": {
+            "attendees": attendees
+        }
     }
+
+    # ==========================================
+    # Create Teams Meeting
+    # ==========================================
 
     response = requests.post(
         teams_meeting_url,
         headers=headers,
         json=teams_meeting_url_payload
     )
+
+    # ==========================================
+    # Parse Response
+    # ==========================================
 
     try:
         response_data = response.json()
@@ -77,17 +148,27 @@ def create_teams_meeting(
             "message": response.text
         }
 
+    # ==========================================
+    # Success
+    # ==========================================
+
     if response.status_code == 201:
 
-        
-        start = datetime.fromisoformat(startDateTime.replace("Z", "+00:00"))
-        end = datetime.fromisoformat(endDateTime.replace("Z", "+00:00"))
+        start = datetime.fromisoformat(
+            startDateTime.replace("Z", "+00:00")
+        )
+
+        end = datetime.fromisoformat(
+            endDateTime.replace("Z", "+00:00")
+        )
 
         duration = end - start
 
         return {
             "status": "Success",
             "candidateName": candidateName,
+            "email": email,
+            "interviewers": interviewers,
             "joinWebUrl": response_data.get("joinWebUrl"),
             "meetingCode": response_data.get("meetingCode"),
             "startDateTime": response_data.get("startDateTime"),
@@ -95,6 +176,10 @@ def create_teams_meeting(
             "subject": response_data.get("subject"),
             "duration": str(duration)
         }
+
+    # ==========================================
+    # Failure
+    # ==========================================
 
     return {
         "status": "Failed",
