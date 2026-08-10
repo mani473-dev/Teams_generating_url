@@ -16,6 +16,13 @@ class TeamsMeetingRequest(BaseModel):
     interviewers: List[str]
 
 
+@app.get("/")
+def home():
+    return {
+        "message": "Teams Meeting API is Running"
+    }
+
+
 @app.post("/create-teams-meeting")
 def execute(request: TeamsMeetingRequest):
 
