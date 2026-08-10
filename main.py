@@ -7,10 +7,6 @@ from datetime import datetime
 load_dotenv()
 
 
-# ==========================================
-# Azure App Registration
-# ==========================================
-
 TENANT_ID = os.getenv("TENANT_ID")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
@@ -54,10 +50,6 @@ def create_teams_meeting(
     interviewers
 ):
 
-    # ==========================================
-    # Generate Access Token
-    # ==========================================
-
     access_token = get_access_token()
 
     if access_token is None:
@@ -66,18 +58,10 @@ def create_teams_meeting(
             "message": "Unable to generate access token."
         }
 
-    # ==========================================
-    # Headers
-    # ==========================================
-
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
-
-    # ==========================================
-    # Microsoft Graph Endpoint
-    # ==========================================
 
     teams_meeting_url = (
         f"https://graph.microsoft.com/v1.0/"
@@ -85,60 +69,21 @@ def create_teams_meeting(
     )
 
     # ==========================================
-    # Create Attendees
-    # ==========================================
-
-    attendees = []
-
-    # Candidate
-    if email:
-        attendees.append({
-            "identity": {
-                "user": {
-                    "id": email
-                }
-            },
-            "role": "attendee"
-        })
-
-    # Interviewers
-    for interviewer in interviewers:
-
-        attendees.append({
-            "identity": {
-                "user": {
-                    "id": interviewer
-                }
-            },
-            "role": "presenter"
-        })
-
-    # ==========================================
-    # Teams Meeting Payload
+    # IMPORTANT:
+    # Don't send interviewers to Graph yet.
     # ==========================================
 
     teams_meeting_url_payload = {
         "startDateTime": startDateTime,
         "endDateTime": endDateTime,
-        "subject": f"{subject} - {candidateName}",
-        "participants": {
-            "attendees": attendees
-        }
+        "subject": f"{subject} - {candidateName}"
     }
-
-    # ==========================================
-    # Create Teams Meeting
-    # ==========================================
 
     response = requests.post(
         teams_meeting_url,
         headers=headers,
         json=teams_meeting_url_payload
     )
-
-    # ==========================================
-    # Parse Response
-    # ==========================================
 
     try:
         response_data = response.json()
@@ -147,10 +92,6 @@ def create_teams_meeting(
             "status": "Failed",
             "message": response.text
         }
-
-    # ==========================================
-    # Success
-    # ==========================================
 
     if response.status_code == 201:
 
@@ -176,10 +117,6 @@ def create_teams_meeting(
             "subject": response_data.get("subject"),
             "duration": str(duration)
         }
-
-    # ==========================================
-    # Failure
-    # ==========================================
 
     return {
         "status": "Failed",
