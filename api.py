@@ -4,6 +4,7 @@ from typing import List
 
 from main import create_teams_meeting
 
+
 app = FastAPI()
 
 
@@ -43,11 +44,18 @@ def home():
 def execute(request: TeamsMeetingRequest):
 
     return create_teams_meeting(
+
         request.candidateName,
+
         request.email,
+
         request.startDateTime,
+
         request.endDateTime,
+
         request.subject,
+
         request.interviewers,
+
         request.interviewersEmail
     )
