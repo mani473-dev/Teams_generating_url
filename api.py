@@ -4,8 +4,22 @@ from typing import List
 
 from main import create_teams_meeting
 
+
 app = FastAPI()
 
+
+# ==========================================
+# Interviewer Model
+# ==========================================
+
+class Interviewer(BaseModel):
+    name: str
+    email: str
+
+
+# ==========================================
+# Request Model
+# ==========================================
 
 class TeamsMeetingRequest(BaseModel):
 
@@ -15,9 +29,12 @@ class TeamsMeetingRequest(BaseModel):
     endDateTime: str
     subject: str
 
-    interviewers: List[str]
-    interviewersEmail: List[str]
+    interviewers: List[Interviewer]
 
+
+# ==========================================
+# Home
+# ==========================================
 
 @app.get("/")
 def home():
@@ -26,6 +43,10 @@ def home():
         "message": "Teams Meeting API is Running"
     }
 
+
+# ==========================================
+# Create Teams Meeting
+# ==========================================
 
 @app.post("/create-teams-meeting")
 def execute(request: TeamsMeetingRequest):
@@ -36,6 +57,5 @@ def execute(request: TeamsMeetingRequest):
         request.startDateTime,
         request.endDateTime,
         request.subject,
-        request.interviewers,
-        request.interviewersEmail
+        request.interviewers
     )
