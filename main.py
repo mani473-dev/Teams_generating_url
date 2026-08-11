@@ -57,8 +57,8 @@ def create_teams_meeting(
     startDateTime,
     endDateTime,
     subject,
-    interviewerName,
-    interviewerEmail
+    interviewers,
+    interviewersEmail
 ):
 
     # ==========================================
@@ -162,13 +162,11 @@ def create_teams_meeting(
 
     if response.status_code == 201:
 
-
         # ======================================
         # Calculate Duration
         # ======================================
 
         start = datetime.fromisoformat(
-
             startDateTime.replace(
                 "Z",
                 "+00:00"
@@ -176,7 +174,6 @@ def create_teams_meeting(
         )
 
         end = datetime.fromisoformat(
-
             endDateTime.replace(
                 "Z",
                 "+00:00"
@@ -222,7 +219,7 @@ def create_teams_meeting(
 
 
         # ======================================
-        # Return Success Response
+        # Return Response
         # ======================================
 
         return {
@@ -233,9 +230,9 @@ def create_teams_meeting(
 
             "candidateEmail": email,
 
-            "interviewerName": interviewerName,
+            "interviewers": interviewers,
 
-            "interviewerEmail": interviewerEmail,
+            "interviewersEmail": interviewersEmail,
 
             "joinWebUrl": join_web_url,
 
