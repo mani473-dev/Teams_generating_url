@@ -57,7 +57,8 @@ def create_teams_meeting(
     startDateTime,
     endDateTime,
     subject,
-    interviewers
+    interviewers,
+    interviewersEmail
 ):
 
     # ==========================================
@@ -185,10 +186,6 @@ def create_teams_meeting(
             "meetingCode"
         )
 
-        # --------------------------------------
-        # Get Passcode
-        # --------------------------------------
-
         passcode = response_data.get(
             "passcode"
         )
@@ -207,6 +204,8 @@ def create_teams_meeting(
             "candidateEmail": email,
 
             "interviewers": interviewers,
+
+            "interviewersEmail": interviewersEmail,
 
             "joinWebUrl": join_web_url,
 
