@@ -57,8 +57,7 @@ def create_teams_meeting(
     startDateTime,
     endDateTime,
     subject,
-    interviewers,
-    interviewersEmail
+    interviewers
 ):
 
     # ==========================================
@@ -204,8 +203,6 @@ def create_teams_meeting(
             "candidateEmail": email,
 
             "interviewers": interviewers,
-
-            "interviewersEmail": interviewersEmail,
 
             "joinWebUrl": join_web_url,
 
