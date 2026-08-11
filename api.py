@@ -2,10 +2,21 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
 
+
 from main import create_teams_meeting
 
 
 app = FastAPI()
+
+
+# ==========================================
+# Interviewer Model
+# ==========================================
+
+class Interviewer(BaseModel):
+
+    name: str
+    email: str
 
 
 # ==========================================
@@ -15,13 +26,16 @@ app = FastAPI()
 class TeamsMeetingRequest(BaseModel):
 
     candidateName: str
+
     email: str
+
     startDateTime: str
+
     endDateTime: str
+
     subject: str
 
-    interviewers: List[str]
-    interviewersEmail: List[str]
+    interviewers: List[Interviewer]
 
 
 # ==========================================
@@ -43,6 +57,13 @@ def home():
 @app.post("/create-teams-meeting")
 def execute(request: TeamsMeetingRequest):
 
+    # Convert Pydantic objects into normal dictionaries
+
+    interviewers = [
+        interviewer.model_dump()
+        for interviewer in request.interviewers
+    ]
+
     return create_teams_meeting(
 
         request.candidateName,
@@ -55,7 +76,5 @@ def execute(request: TeamsMeetingRequest):
 
         request.subject,
 
-        request.interviewers,
-
-        request.interviewersEmail
+        interviewers
     )
