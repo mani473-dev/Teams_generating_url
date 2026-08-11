@@ -5,12 +5,11 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 
+
 load_dotenv()
 
 
-# ==========================================
-# Azure Configuration
-# ==========================================
+
 
 TENANT_ID = os.getenv("TENANT_ID")
 CLIENT_ID = os.getenv("CLIENT_ID")
@@ -29,12 +28,16 @@ def get_access_token():
     )
 
     app = ConfidentialClientApplication(
+
         CLIENT_ID,
+
         authority=authority,
+
         client_credential=CLIENT_SECRET
     )
 
     token_result = app.acquire_token_for_client(
+
         scopes=[
             "https://graph.microsoft.com/.default"
         ]
@@ -47,18 +50,22 @@ def get_access_token():
     return token_result["access_token"]
 
 
-# ==========================================
-# Create Teams Meeting
-# ==========================================
+
 
 def create_teams_meeting(
+
     candidateName,
+
     email,
+
     startDateTime,
+
     endDateTime,
+
     subject,
-    interviewers,
-    interviewersEmail
+
+    interviewers
+
 ):
 
     # ==========================================
@@ -70,22 +77,24 @@ def create_teams_meeting(
     if access_token is None:
 
         return {
+
             "status": "Failed",
+
             "message": "Unable to generate access token."
+
         }
 
 
-    # ==========================================
-    # Request Headers
-    # ==========================================
+
 
     headers = {
 
-        "Authorization": (
-            f"Bearer {access_token}"
-        ),
+        "Authorization":
+            f"Bearer {access_token}",
 
-        "Content-Type": "application/json"
+        "Content-Type":
+            "application/json"
+
     }
 
 
@@ -94,38 +103,36 @@ def create_teams_meeting(
     # ==========================================
 
     teams_meeting_url = (
+
         "https://graph.microsoft.com/v1.0/"
+
         f"users/{OBJECT_ID}/onlineMeetings"
+
     )
 
 
     # ==========================================
     # Teams Meeting Payload
     # ==========================================
-    #
-    # isPasscodeRequired = true
-    # tells Microsoft Teams to generate
-    # a passcode automatically.
-    #
-    # Microsoft does not support providing
-    # your own custom passcode here.
-    # ==========================================
 
     teams_meeting_payload = {
 
-        "startDateTime": startDateTime,
+        "startDateTime":
+            startDateTime,
 
-        "endDateTime": endDateTime,
+        "endDateTime":
+            endDateTime,
 
-        "subject": (
-            f"{subject} - {candidateName}"
-        ),
+        "subject":
+            f"{subject} - {candidateName}",
 
         "joinMeetingIdSettings": {
 
-            "isPasscodeRequired": True
+            "isPasscodeRequired":
+                True
 
         }
+
     }
 
 
@@ -140,11 +147,12 @@ def create_teams_meeting(
         headers=headers,
 
         json=teams_meeting_payload
+
     )
 
 
     # ==========================================
-    # Read Microsoft Graph Response
+    # Read Response
     # ==========================================
 
     try:
@@ -158,6 +166,7 @@ def create_teams_meeting(
             "status": "Failed",
 
             "message": response.text
+
         }
 
 
@@ -167,110 +176,143 @@ def create_teams_meeting(
 
     if response.status_code == 201:
 
+
         # --------------------------------------
         # Calculate Duration
         # --------------------------------------
 
         start = datetime.fromisoformat(
+
             startDateTime.replace(
+
                 "Z",
+
                 "+00:00"
+
             )
+
         )
 
         end = datetime.fromisoformat(
+
             endDateTime.replace(
+
                 "Z",
+
                 "+00:00"
+
             )
+
         )
 
         duration = end - start
 
 
         # --------------------------------------
-        # Get Teams Meeting URL
+        # Meeting URL
         # --------------------------------------
 
-        join_web_url = response_data.get(
-            "joinWebUrl"
+        join_web_url = (
+
+            response_data.get(
+
+                "joinWebUrl"
+
+            )
+
         )
 
 
         # --------------------------------------
-        # Get Meeting ID and Passcode
-        # --------------------------------------
-        #
-        # These are inside:
-        #
-        # joinMeetingIdSettings
-        #
-        # Example:
-        #
-        # "joinMeetingIdSettings": {
-        #     "isPasscodeRequired": true,
-        #     "joinMeetingId": "123456789",
-        #     "passcode": "ABC123"
-        # }
+        # Meeting ID + Passcode
         # --------------------------------------
 
         join_meeting_settings = (
+
             response_data.get(
+
                 "joinMeetingIdSettings",
+
                 {}
+
             )
+
         )
 
 
         meeting_id = (
+
             join_meeting_settings.get(
+
                 "joinMeetingId"
+
             )
+
         )
 
 
         passcode = (
+
             join_meeting_settings.get(
+
                 "passcode"
+
             )
+
         )
 
 
         # --------------------------------------
-        # Return Response
+        # Success Response
         # --------------------------------------
 
         return {
 
-            "status": "Success",
+            "status":
+                "Success",
 
-            "candidateName": candidateName,
+            "candidateName":
+                candidateName,
 
-            "candidateEmail": email,
+            "candidateEmail":
+                email,
 
-            "interviewers": interviewers,
+            "interviewers":
+                interviewers,
 
-            "interviewersEmail": interviewersEmail,
+            "joinWebUrl":
+                join_web_url,
 
-            "joinWebUrl": join_web_url,
+            "meetingCode":
+                meeting_id,
 
-            "meetingCode": meeting_id,
+            "passcode":
+                passcode,
 
-            "passcode": passcode,
+            "startDateTime":
+                response_data.get(
 
-            "startDateTime": response_data.get(
-                "startDateTime"
-            ),
+                    "startDateTime"
 
-            "endDateTime": response_data.get(
-                "endDateTime"
-            ),
+                ),
 
-            "subject": response_data.get(
-                "subject"
-            ),
+            "endDateTime":
+                response_data.get(
 
-            "duration": str(duration)
+                    "endDateTime"
+
+                ),
+
+            "subject":
+                response_data.get(
+
+                    "subject"
+
+                ),
+
+            "duration":
+                str(duration)
+
         }
 
 
@@ -280,9 +322,13 @@ def create_teams_meeting(
 
     return {
 
-        "status": "Failed",
+        "status":
+            "Failed",
 
-        "statusCode": response.status_code,
+        "statusCode":
+            response.status_code,
 
-        "response": response_data
+        "response":
+            response_data
+
     }
